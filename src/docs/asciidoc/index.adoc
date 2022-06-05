@@ -17,3 +17,8 @@ include::{snippets}/members/response-headers.adoc[]
 == RESPONSE FIEDL
 
 include::{snippets}/members/response-fields.adoc[]
+
+
+== REQUEST FIELD
+
+include::{snippets}/createMember/request-fields.adoc[]

@@ -4,6 +4,8 @@ import com.example.fortest.domain.member.controller.MemberController;
 import com.example.fortest.domain.member.dto.MemberRequestDto;
 import com.example.fortest.domain.member.dto.MemberResponseDto;
 import com.example.fortest.domain.member.service.MemberServiceImpl;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
@@ -20,7 +22,9 @@ import org.springframework.restdocs.headers.HeaderDocumentation;
 import org.springframework.restdocs.mockmvc.MockMvcRestDocumentation;
 import org.springframework.restdocs.operation.preprocess.OperationRequestPreprocessor;
 import org.springframework.restdocs.payload.FieldDescriptor;
+import org.springframework.restdocs.payload.JsonFieldType;
 import org.springframework.restdocs.payload.PayloadDocumentation;
+import org.springframework.restdocs.request.RequestDocumentation;
 import org.springframework.restdocs.snippet.Attributes;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
@@ -54,6 +58,7 @@ public class RestDocs {
 
         List<MemberResponseDto.ListDto> list = new ArrayList<>();
         list.add(new MemberResponseDto.ListDto("fsd",10));
+        list.add(new MemberResponseDto.ListDto("fsddf",10));
         Mockito.when(memberService.findAll()).thenReturn(list);
         /*ResultActions resultActions = mvc.perform(MockMvcRequestBuilders.get("/members")
                 .accept(MediaType.APPLICATION_JSON))
@@ -83,10 +88,33 @@ public class RestDocs {
 
     }
 
+    @Test
+    void request_field() throws Exception {
+        Mockito.when(memberService.createMember("hi",10)).thenReturn(1l);
+
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        MemberRequestDto.CreateDto member = new MemberRequestDto.CreateDto("hi",10);
+
+        String string = objectMapper.writeValueAsString(member);
+
+        mvc.perform(MockMvcRequestBuilders.post("/members").contentType(MediaType.APPLICATION_JSON).content(string))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andDo(MockMvcRestDocumentation.document("/createMember",
+                        PayloadDocumentation.requestFields(PayloadDocumentation.fieldWithPath("name").type(JsonFieldType.STRING).description("이름").attributes(getAttribute()),
+                                PayloadDocumentation.fieldWithPath("age").type(JsonFieldType.NUMBER).description("나이").optional())
+                        ));
+    }
+
     private FieldDescriptor[] getReviewFieldDescriptors() {
         return new FieldDescriptor[]{
                 fieldWithPath("[].name").description("이름"),
                 fieldWithPath("[].age").description("나이")
         };
     }
+
+    private Attributes.Attribute getAttribute(){
+        return Attributes.key("constraints").value("10자이하");
+    }
+
 }
